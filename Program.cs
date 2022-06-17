@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Estudos.Entities;
+using System;
 using System.Globalization;
-using Estudos.Entities.Enums;
-using Estudos.Entities;
+using System.IO;
 namespace Estudos
 {
     class Program
@@ -9,42 +9,42 @@ namespace Estudos
 
         static void Main(string[] args)
         {
-            Console.Write("Enter department's name: ");
-            string deptName = Console.ReadLine();
-            Console.WriteLine("Enter worker data: ");
-            Console.Write("Name: ");
-            string name = Console.ReadLine();
-            Console.Write("Level (Junior/MidLevel/Senior): ");
-            WorkerLevel level = Enum.Parse<WorkerLevel>(Console.ReadLine());
-            Console.Write("Base salary: ");
-            double baseSalary = double.Parse(Console.ReadLine(), CultureInfo.InvariantCulture);
+            Console.WriteLine("Qual o caminho do arquivo: ");
+            string sourceFilePath = Console.ReadLine();
 
-            Departament dept = new Departament(deptName);
-            Worker worker = new Worker(name, level, baseSalary, dept);
-
-            Console.Write("How many contracts to this worker? ");
-            int n = int.Parse(Console.ReadLine());
-
-            for (int i = 1; i <= n; i++)
+            try
             {
-                Console.WriteLine("Enter " + "#" + i + " contract " + "data: ");
-                Console.Write("Data (DD/MM/YYYY): ");
-                DateTime date = DateTime.Parse(Console.ReadLine());
-                Console.Write("Value per hour: ");
-                double valuePerHour = double.Parse(Console.ReadLine(), CultureInfo.InvariantCulture);
-                Console.Write("Duration (hours): ");
-                int hours = int.Parse(Console.ReadLine());
-                HourContract contract = new HourContract(date, valuePerHour, hours);
-                worker.AddContract(contract);
+                string[] lines = File.ReadAllLines(sourceFilePath);
+
+                string sourceFolderPath = Path.GetDirectoryName(sourceFilePath);
+                string targetFolderPath = sourceFolderPath + @"\out";
+                string targetFilePath = sourceFolderPath + @"\summary.csv";
+
+                Directory.CreateDirectory(targetFolderPath);
+
+                using(StreamWriter sw = File.AppendText(targetFilePath))
+                {
+                    foreach(string line in lines)
+                    {
+                        string [] camp = line.Split(',');
+                        string name = camp[0];
+                        double price = double.Parse(camp[1], CultureInfo.InvariantCulture);
+                        int quantity = int.Parse(camp[2]);
+
+                        Product prod = new Product(name, price, quantity);
+
+                        sw.WriteLine(prod.Name + ", " + prod.Total().ToString("F2", CultureInfo.InvariantCulture));
+
+                        sw.WriteLine(line);
+                    }
+                }
             }
-            Console.WriteLine();
-            Console.Write("Enter month and year to calculate income (MM/YYYY): ");
-            string monthAndYear = Console.ReadLine();
-            int month = int.Parse(monthAndYear.Substring(0, 2));
-            int year = int.Parse(monthAndYear.Substring(3));
-            Console.WriteLine("Name: " + worker.Name);
-            Console.WriteLine("Department: " + worker.Departament.Name);
-            Console.WriteLine("Incomme for " + monthAndYear + ": " + worker.Income(year, month));
+            catch (IOException e)
+            {
+                Console.WriteLine("there was an error: ");
+                Console.WriteLine(e.Message);
+            }
+
         }
 
     }
